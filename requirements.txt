@@ -1,0 +1,5 @@
+Flask>=3.0
+python-dotenv>=1.0
+
+# Installa pyodbc solo su Windows (per DB reale)
+pyodbc>=5.1; sys_platform == "win32"

@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title or "Scanner EAN" }}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container">
+  <nav class="navbar navbar-expand-lg bg-light mb-3">
+    <div class="container-fluid d-flex justify-content-between align-items-start">
+      <div class="d-flex flex-column align-items-start">
+        <a class="navbar-brand d-flex align-items-center" href="{{ url_for('home') }}">
+          <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="me-2" style="height:28px">
+          <span>MyIcorip</span>
+        </a>
+        {% if session.get('user') %}
+          <span class="navbar-text text-muted small ms-1">Ciao {{ session['user']['username'] }}</span>
+        {% endif %}
+      </div>
+      <a href="{{ url_for('cart') }}" class="btn btn-sm btn-outline-primary">
+        Ordine <span class="badge bg-primary" id="cartCount">{{ cart_lines or 0 }}</span>
+      </a>
+    </div>
+  </nav>
+  <!-- Titolo rimosso per più spazio su mobile -->
+
+  <!-- Toolbar + Cart badge aligned -->
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div class="d-flex gap-2">
+      <button id="btnToggleScan" type="button" class="btn btn-secondary btn-sm">Pausa</button>
+      <button id="btnTorch" type="button" class="btn btn-outline-secondary btn-sm d-none">Torcia</button>
+      <div class="form-check form-switch align-self-center">
+        <input class="form-check-input" type="checkbox" id="chkBeep" checked>
+        <label class="form-check-label" for="chkBeep">Suono</label>
+      </div>
+    </div>
+    <a href="{{ url_for('cart') }}" class="btn btn-sm btn-outline-primary" id="btnCart">
+      Ordine <span class="badge bg-primary" id="cartCount">{{ cart_lines or 0 }}</span>
+    </a>
+  </div>
+
+  <!-- Viewport scanner con overlay -->
+  <div id="scanner-container" style="width:100%; max-width:520px; height:360px; background:#000; border:1px solid #ccc; position:relative; overflow:hidden;">
+    <div id="safe-area" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none;">
+      <div style="width:70%; height:60%; border:2px solid rgba(0,255,0,.6); border-radius:6px; box-shadow:0 0 0 9999px rgba(0,0,0,.35) inset;"></div>
+    </div>
+    <canvas class="drawingBuffer" style="position:absolute; top:0; left:0;"></canvas>
+  </div>
+
+  <!-- Audio beep -->
+  <audio id="beep" preload="auto">
+    <source src="{{ url_for('static', filename='beep.wav') }}" type="audio/wav">
+  </audio>
+
+  <!-- Stato e messaggi -->
+  <div id="scan-status" class="mt-2 text-muted small">Pronto</div>
+  <div id="scan-error" class="mt-1 text-danger small"></div>
+
+  <!-- Risultato prodotto -->
+  <div id="resultBox" class="card mt-3" style="display:none;">
+    <div class="card-body">
+      <h5 id="resDescr"></h5>
+      <div class="mb-2"><span class="text-muted">EAN:</span> <span id="resEan"></span></div>
+      <form id="scanAddForm" method="post" action="#" class="d-flex gap-2">
+        <input type="hidden" id="resCodart" name="codart">
+        <input type="hidden" id="resDescrInput" name="descr">
+        <input type="hidden" id="resEanInput" name="ean">
+        <input type="hidden" id="resPack" name="pack">
+        <input id="resQty" name="qty" type="number" min="1" step="1" value="1" class="form-control" style="max-width:100px">
+        <button class="btn btn-success">Aggiungi</button>
+      </form>
+      <div id="resPackInfo" class="small text-muted mt-1"></div>
+    </div>
+  </div>
+
+  <!-- Audio beep -->
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js"></script>
+<script>
+(function(){
+  let running = false;
+  let mediaTrack = null;
+  const statusEl = document.getElementById("scan-status");
+  const errorEl  = document.getElementById("scan-error");
+  const beepEl   = document.getElementById("beep");
+  const btnToggle= document.getElementById("btnToggleScan");
+  const btnTorch = document.getElementById("btnTorch");
+  const chkBeep  = document.getElementById("chkBeep");
+  const cartCountEl = document.getElementById("cartCount");
+
+  function setStatus(msg){ statusEl.textContent = msg; }
+  function showErr(msg){ errorEl.textContent = msg; }
+  function clearErr(){ errorEl.textContent = ""; }
+
+  function cleanupQuagga(){
+    try { Quagga.offDetected(); } catch(e){}
+    try { Quagga.stop(); } catch(e){}
+    running = false;
+    mediaTrack = null;
+  }
+
+  async function startLive(){
+    setStatus("Avvio camera.");
+    clearErr();
+    cleanupQuagga();
+
+    Quagga.init({
+      inputStream: {
+        type: "LiveStream",
+        target: document.getElementById("scanner-container"),
+        constraints: { facingMode: "environment" }
+      },
+      decoder: { readers: ["ean_reader"] },
+      locate: true
+    }, function(err){
+      if (err) { showErr(err); return; }
+      Quagga.start();
+      running = true;
+
+      try {
+        const stream = Quagga.CameraAccess.getActiveStream();
+        if (stream) {
+          const tracks = stream.getVideoTracks();
+          mediaTrack = tracks && tracks[0] ? tracks[0] : null;
+          const caps = mediaTrack && mediaTrack.getCapabilities ? mediaTrack.getCapabilities() : null;
+          if (caps && Object.prototype.hasOwnProperty.call(caps, 'torch')) {
+            btnTorch.classList.remove('d-none');
+            btnTorch.disabled = false;
+          } else {
+            btnTorch.classList.add('d-none');
+            btnTorch.disabled = true;
+          }
+        }
+      } catch(e) {
+        btnTorch.classList.add('d-none');
+        btnTorch.disabled = true;
+      }
+    });
+
+    Quagga.onDetected(async function(d){
+      if (!running) return;
+
+      const code = d && d.codeResult && d.codeResult.code;
+      if (!code) return;
+
+      setStatus("EAN letto: " + code);
+      clearErr();
+      if (chkBeep.checked) { try { beepEl.currentTime = 0; beepEl.play(); } catch(e){} }
+
+      cleanupQuagga();
+      btnToggle.textContent = "Riprendi";
+
+      try {
+        const resp = await fetch(`/api/products/by-ean/${code}`);
+        if (!resp.ok) throw new Error("Articolo non trovato");
+        const product = await resp.json();
+
+        clearErr();
+        document.getElementById("resultBox").style.display = "";
+        document.getElementById("resDescr").textContent = product.descrizione;
+        document.getElementById("resEan").textContent   = product.ean;
+        document.getElementById("resCodart").value      = product.codart;
+        document.getElementById("resDescrInput").value  = product.descrizione;
+        document.getElementById("resEanInput").value    = product.ean;
+        document.getElementById("resPack").value        = product.pack;
+        const qtyIn = document.getElementById("resQty");
+        const step = (product.pack && product.pack>0) ? product.pack : 1;
+        qtyIn.value = step; qtyIn.min = step; qtyIn.step = step;
+        const packInfoEl = document.getElementById("resPackInfo");
+        if (product.pack && product.pack>0) {
+          packInfoEl.textContent = "";
+          packInfoEl.style.display = "none";
+        } else {
+          packInfoEl.textContent = `⚠ Pack non configurato (impostato step 1)`;
+          packInfoEl.style.display = "";
+        }
+      } catch(e){
+        showErr("Errore: " + e.message);
+      }
+    });
+  }
+
+  btnToggle.addEventListener('click', ()=>{
+    if (running) {
+      cleanupQuagga();
+      setStatus("In pausa");
+      btnToggle.textContent = "Riprendi";
+    } else {
+      startLive();
+      btnToggle.textContent = "Pausa";
+    }
+  });
+
+  btnTorch.addEventListener('click', async ()=>{
+    if (!mediaTrack) return;
+    const caps = mediaTrack.getCapabilities ? mediaTrack.getCapabilities() : {};
+    if (!('torch' in caps)) return;
+    try {
+      const settings = mediaTrack.getSettings ? mediaTrack.getSettings() : {};
+      const enable = !settings.torch;
+      await mediaTrack.applyConstraints({ advanced: [{ torch: enable }] });
+      btnTorch.classList.toggle('btn-outline-secondary', !enable);
+      btnTorch.classList.toggle('btn-warning', enable);
+      btnTorch.textContent = enable ? "Torcia ON" : "Torcia";
+    } catch(e){}
+  });
+
+  document.addEventListener("DOMContentLoaded", ()=>{
+    try { beepEl.load(); } catch(e){}
+    startLive();
+  });
+
+  document.addEventListener('submit', async (ev)=>{
+    const form = ev.target;
+    if (form && form.id === 'scanAddForm') {
+      ev.preventDefault();
+      try {
+        const fd = new FormData(form);
+        const resp = await fetch('/api/cart/add', { method: 'POST', body: fd });
+        if (!resp.ok) throw new Error("Errore aggiunta all'ordine");
+        const data = await resp.json();
+        if (!data.ok) throw new Error(data.error || 'Errore');
+        if (cartCountEl) cartCountEl.textContent = String(data.cart_lines || 0);
+        setStatus(`Aggiunto ${fd.get('qty')} × ${fd.get('codart')}`);
+        try { document.getElementById('resultBox').style.display = 'none'; } catch(e){}
+        btnToggle.textContent = 'Pausa';
+        startLive();
+      } catch(e) {
+        showErr('Errore: ' + (e.message || e));
+      }
+    }
+  });
+
+  function unlockBeep(){
+    beepEl.play().then(()=>{
+      beepEl.pause();
+      beepEl.currentTime = 0;
+    }).catch(()=>{});
+    document.removeEventListener('click', unlockBeep);
+  }
+  document.addEventListener('click', unlockBeep);
+
+})();
+</script>
+</body>
+</html>

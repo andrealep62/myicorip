@@ -1,0 +1,66 @@
+{
+	// Place your waordini workspace snippets here. Each snippet is defined under a snippet name and has a scope, prefix, body and 
+	// description. Add comma separated ids of the languages where the snippet is applicable in the scope field. If scope 
+	// is left empty or omitted, the snippet gets applied to all languages. The prefix is what is 
+	// used to trigger the snippet and the body will be expanded and inserted. Possible variables are: 
+	// $1, $2 for tab stops, $0 for the final cursor position, and ${1:label}, ${2:another} for placeholders. 
+	// Placeholders with the same ids are connected.
+
+	"Start waordini (PowerShell)": {
+		"scope": "powershell",
+		"prefix": "start",
+		"body": [
+			"C:\\venvs\\waordini312\\Scripts\\Activate.ps1",
+			"cd \"C:\\Users\\Comm02\\OneDrive - COLORIFICIO I.CO.RI.P. Spa\\waordini\"",
+			"Start-Process -FilePath python -ArgumentList \"waordini.py\"",
+			"Start-Sleep -Seconds 1",
+			"Start-Process \"https://127.0.0.1:${1:5001}/\"$0"
+		],
+		"description": "Attiva venv, entra nella cartella waordini e avvia l'app."
+	},
+
+	"Logo aziendale (Jinja)": {
+		"scope": "html,jinja",
+		"prefix": "logo-azienda",
+		"body": [
+			"<img src=\"{{ url_for('static', filename='logo.png') }}\" alt=\"Logo\" style=\"height:${1:28}px\">$0"
+		],
+		"description": "Inserisce il tag <img> del logo aziendale (Flask/Jinja)."
+	},
+
+	"Utenti di prova (Python)": {
+		"scope": "python",
+		"prefix": "test-users",
+		"body": [
+			"TEST_USERS = {\"Andrea\": \"test\", \"Alice\": \"test\", \"Marco\": \"test\"}$0"
+		],
+		"description": "Mappa utenti di prova per test locali."
+	},
+
+	"TTL carrello (PowerShell)": {
+		"scope": "powershell",
+		"prefix": "ttl-cart-ps",
+		"body": [
+			"$env:CART_TTL_DAYS = \"${1:30}\"$0"
+		],
+		"description": "Imposta CART_TTL_DAYS in PowerShell."
+	},
+
+	"TTL carrello (bash)": {
+		"scope": "shellscript",
+		"prefix": "ttl-cart-bash",
+		"body": [
+			"export CART_TTL_DAYS=${1:30}$0"
+		],
+		"description": "Imposta CART_TTL_DAYS in bash."
+	},
+
+	"Apri MyIcorip nel browser": {
+		"scope": "powershell",
+		"prefix": "open-waordini",
+		"body": [
+			"Start-Process \"https://127.0.0.1:${1:5001}/\"$0"
+		],
+		"description": "Apre l'app nel browser predefinito su 127.0.0.1 (porta configurabile)."
+	}
+}
