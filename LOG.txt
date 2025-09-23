@@ -1,8 +1,8 @@
 — GitHub: come lavorare con il repo privato —
 
 Clona il progetto (solo la prima volta su un nuovo PC). All'interno della cartella locale definita per il progetto:
-git clone https://github.com/andrealep62/myicorip.git waordini
-cd waordini
+git clone https://github.com/andrealep62/myicorip.git myicorip
+cd myicorip
 
 Aggiorna il codice (ogni volta che riapri per lavorare):
 git pull
@@ -16,24 +16,24 @@ git push
 
 NOTE IMPORTANTI:
 	•	Il file .env NON va mai su Git (è escluso da .gitignore).
-	•	Copia manualmente l’.env da backup nella cartella waordini su ogni PC nuovo.
+	•	Copia manualmente l’.env da backup nella cartella myicorip su ogni PC nuovo.
 	•	Per vedere lo stato dei file: git status
 	•	Se appare la richiesta di password, usa il TOKEN GitHub (non la password dell’account).
 
-Appunti – Riattivare l’ambiente waordini
+Appunti – Riattivare l’ambiente myicorip
 
 Ogni volta che apri un nuovo terminale su macOS lancia questi due comandi anche insieme: 
 
 SUL MAC:
-cd /Users/andrea/Progetti/waordini
+cd /Users/andrea/Progetti/myicorip
 source .venv_mac/bin/activate
 
 SUL PC:
-cd Progetti/waordini
+cd Progetti/myicorip
 
 
 Avvia l’app:
-python waordini.py
+python myicorip.py
 
 Accessi all’app in ufficio:
 https://192.168.0.41:5001
@@ -47,7 +47,7 @@ UTENTE: Andrea / Alice
 PSW: test
 
 Note:
-	•	Se vedi il prompt che inizia con (waordini), significa che l’ambiente è attivo.
+	•	Se vedi il prompt che inizia con (myicorip), significa che l’ambiente è attivo.
 	•	Il server parte sulla porta definita nel file .env (attualmente 5001).
 	•	Per uscire dal venv: deactivate
 
@@ -74,7 +74,7 @@ inserito nella query della vista articoli i campi :
 	•	Dopo Aggiungi: nasconde il box e lo scanner riparte automaticamente
 	•	Info pack: mostra solo warning quando pack=0
 	•	Terminologia: “Carrello” sostituito con “Ordine” in tutta l’app
-	•	i dati Mock vengono presi dal csv artico di ICORIP (risultato stampato in ufficio della vista) in modo da avere comunque dati reali e cmq i fittizi sono rimasti nel codice waordini.py
+	•	i dati Mock vengono presi dal csv artico di ICORIP (risultato stampato in ufficio della vista) in modo da avere comunque dati reali e cmq i fittizi sono rimasti nel codice myicorip.py
 
 12 settembre 2025 — Log lavorazioni principali
 	•	Ordinamento articoli: ora usa i campi certi Prodotto, Colore e Formato (discendente). Niente più deduzioni dalla descrizione, salvo come ultima spiaggia quando i campi non sono presenti.
@@ -124,7 +124,7 @@ GO
 Nota: i server produzione e mock ora espongono tutti i campi necessari; per cambiare la provenienza dati usare REAL_DB=1/0 nel file .env.
 
 19/09/2025 — Configurazione macOS
-	•	Percorso progetto: /Users/andrea/Progetti/waordini
+	•	Percorso progetto: /Users/andrea/Progetti/myicorip
 	•	Virtualenv: source .venv_mac/bin/activate
 
 
@@ -134,7 +134,7 @@ Nota: i server produzione e mock ora espongono tutti i campi necessari; per camb
 
 TODO fine sviluppo (ricordare per produzione):
 	•	14/09/2025 — Migrazione a DB per persistenza/storico: introdurre tabelle per carrelli (OrdersCart/OrdersCartItem) e storico ordini + clienti; sostituire il salvataggio JSON con upsert/select su SQL Server. Prevedere anche storico ordini inviati.
-	•	Reimpostare debug=False in waordini.py (app.run)
+	•	Reimpostare debug=False in myicorip.py (app.run)
 	•	Disattivare/condizionare TEMPLATES_AUTO_RELOAD (usare FLASK_DEBUG)
 	•	Riavviare il server per applicare le impostazioni
 
@@ -164,7 +164,7 @@ SNIPPET UTILI (COPIA/INCOLLA VELOCE)
 • Percorso file: mettere il logo in static/logo.png (consigliata altezza 28–32 px).
 • HTML (già inserito nei template):
 
-	•	Aggiungere un utente di prova (waordini.py)
+	•	Aggiungere un utente di prova (myicorip.py)
 TEST_USERS = {“Andrea”: “test”, “Alice”: “test”, “Marco”: “test”}
 	•	Modificare TTL di salvataggio carrello (default 20 giorni)
 • macOS/Linux (bash):  export CART_TTL_DAYS=30

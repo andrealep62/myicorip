@@ -1,4 +1,4 @@
-# waordini.py
+# myicorip.py
 r"""
 WebApp Ordini – VERSIONE UNIFICATA
 - Template Jinja: priorità a file su disco (templates/), fallback in memoria
