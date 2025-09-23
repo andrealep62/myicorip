@@ -1,12 +1,33 @@
+— GitHub: come lavorare con il repo privato —
 
-Appunti – Riattivare l'ambiente waordini
+Clona il progetto (solo la prima volta su un nuovo PC):
+git clone https://github.com/andrealep62/myicorip.git waordini
+cd waordini
 
-Ogni volta che chiudi e riapri PowerShell lancia questi due comandi anche insieme:
+Aggiorna il codice (ogni volta che riapri per lavorare):
+git pull
 
-C:\venvs\waordini312\Scripts\Activate.ps1
-cd "C:\Users\Comm02\OneDrive - COLORIFICIO I.CO.RI.P. Spa\waordini"
+Salva modifiche locali:
+git add .
+git commit -m “Descrizione breve della modifica”
 
-Avvia l'app:
+Invia modifiche su GitHub:
+git push
+
+NOTE IMPORTANTI:
+	•	Il file .env NON va mai su Git (è escluso da .gitignore).
+	•	Copia manualmente l’.env da backup nella cartella waordini su ogni PC nuovo.
+	•	Per vedere lo stato dei file: git status
+	•	Se appare la richiesta di password, usa il TOKEN GitHub (non la password dell’account).
+
+Appunti – Riattivare l’ambiente waordini
+
+Ogni volta che apri un nuovo terminale su macOS lancia questi due comandi anche insieme (percorso aggiornato in /Users/andrea/Progetti/waordini):
+
+cd /Users/andrea/Progetti/waordini
+source .venv_mac/bin/activate
+
+Avvia l’app:
 python waordini.py
 
 Accessi all’app in ufficio:
@@ -15,75 +36,72 @@ UTENTE: Andrea / Alice
 PSW: test
 E si collega al server in azienda
 
-Accessi all'app da casa su Mac con dati in MOCK.
+Accessi all’app da casa su Mac con dati in MOCK.
 https://127.0.0.1:5001
 UTENTE: Andrea / Alice
 PSW: test
 
 Note:
-- Se vedi il prompt che inizia con (waordini), significa che l'ambiente è attivo.
-- Il server parte sulla porta definita nel file .env (attualmente 5001).
-- Per uscire dal venv: deactivate
-
+	•	Se vedi il prompt che inizia con (waordini), significa che l’ambiente è attivo.
+	•	Il server parte sulla porta definita nel file .env (attualmente 5001).
+	•	Per uscire dal venv: deactivate
 
 MOCK vs DB reale:
-- Nel file .env modifica la riga USE_REAL_DB
-  • USE_REAL_DB=0 → usa dati di test (MOCK) dal csv preso dalla vista.
-  • USE_REAL_DB=1 → usa il DB reale (solo in ufficio, rete LAN disponibile)
+	•	Nel file .env modifica la riga USE_REAL_DB
+• USE_REAL_DB=0 → usa dati di test (MOCK) dal csv preso dalla vista.
+• USE_REAL_DB=1 → usa il DB reale (solo in ufficio, rete LAN disponibile)
 
--------------------------------------------------------------------
+⸻
+
 LOG
 
 09/09/2025
 inserito nella query della vista articoli i campi :
-- Prodotto, Colore, Formato :ordinare meglio gli articoli stesso prodotto e stesso colore secondo formati decrescenti
-- Gruppo :per fare delle macro search con un click, tipo scorciatoie
-- S_Gruppo :per fare uno switch per filtrare Bianchi (1)/Basi_edi (2)/Convertitori industria (3), Trasparenti inc (6).Come pacchetto prodotti per facilitare un tintometrista.
+	•	Prodotto, Colore, Formato :ordinare meglio gli articoli stesso prodotto e stesso colore secondo formati decrescenti
+	•	Gruppo :per fare delle macro search con un click, tipo scorciatoie
+	•	S_Gruppo :per fare uno switch per filtrare Bianchi (1)/Basi_edi (2)/Convertitori industria (3), Trasparenti inc (6).Come pacchetto prodotti per facilitare un tintometrista.
 
 10/09/2025 Stato attuale (scanner e UI):
-- Debug Flask attivo, auto‑reload template ON
-- Pagina scanner: rimosso titolo; niente "Scanner attivo"; messaggi errore ripuliti automaticamente
-- Lettura EAN: beep opzionale; stop immediato dopo lettura valida; bottone mostra "Riprendi"
-- Aggiungi all'ordine: via AJAX su /api/cart/add, badge conteggio in alto a destra aggiornato
-- Dopo Aggiungi: nasconde il box e lo scanner riparte automaticamente
-- Info pack: mostra solo warning quando pack=0
-- Terminologia: "Carrello" sostituito con "Ordine" in tutta l'app
-- i dati Mock vengono presi dal csv artico di ICORIP (risultato stampato in ufficio della vista) in modo da avere comunque dati reali e cmq i fittizi sono rimasti nel codice waordini.py
+	•	Debug Flask attivo, auto-reload template ON
+	•	Pagina scanner: rimosso titolo; niente “Scanner attivo”; messaggi errore ripuliti automaticamente
+	•	Lettura EAN: beep opzionale; stop immediato dopo lettura valida; bottone mostra “Riprendi”
+	•	Aggiungi all’ordine: via AJAX su /api/cart/add, badge conteggio in alto a destra aggiornato
+	•	Dopo Aggiungi: nasconde il box e lo scanner riparte automaticamente
+	•	Info pack: mostra solo warning quando pack=0
+	•	Terminologia: “Carrello” sostituito con “Ordine” in tutta l’app
+	•	i dati Mock vengono presi dal csv artico di ICORIP (risultato stampato in ufficio della vista) in modo da avere comunque dati reali e cmq i fittizi sono rimasti nel codice waordini.py
 
 12 settembre 2025 — Log lavorazioni principali
-
-- Ordinamento articoli: ora usa i campi certi Prodotto, Colore e Formato (discendente). Niente più deduzioni dalla descrizione, salvo come ultima spiaggia quando i campi non sono presenti.
-- Query DB aggiornate: SELECT include anche Prodotto, Colore, Formato, UM; stessa cosa nell’endpoint scanner per barcode.
-- UI ricerca (B2B style):
-  • Rimossa colonna EAN13; aggiunta colonna Note (input) e controlli quantità con bottoni −/+ e pulsante “Ordina”.
-  • Quantità: interi, max 3 cifre, rispetta pack come min/step, campo compatto.
-  • Evidenziazione: le righe già in ordine sono verdi e mostrano badge “In ordine”.
-  • Testata risultati fissa: creata intestazione esterna sticky (Codice, Descrizione, Note, Q.tà) allineata con i dati; rimosse sovrapposizioni e spazio inutile.
-- Carrello:
-  • Rimossa colonna EAN; aggiunta colonna Note editabile.
-  • Logica righe: chiave “codice + nota”. Stesso codice e stessa nota si sommano; note diverse creano righe separate. In aggiornamento, se due righe diventano uguali, vengono unite sommando le quantità.
-  • Bottone “Aggiorna quantità” rinominato in “Aggiorna”.
-- Esportazione ordine: CSV con colonne “codart; quantita; descrizione; note”. Il codice esportato è quello puro (senza la nota nella chiave).
-- Codici articolo con virgola: normalizzazione a monte. Ovunque a video e negli export i codici mostrano la virgola (la vista/CSV che usano “_” vengono riconvertiti). La ricerca gestisce entrambi i casi.
-- Messaggi ridondanti: rimossi i flash “Aggiunto … / Articolo già in ordine …” in fase di aggiunta dalla ricerca.
-- Note: lunghezza massima 30 caratteri, sanificate (niente “||”), placeholder tolto sia in ricerca sia in carrello.
-- CSV articoli normalizzato: script dedicato per sovrascrivere mock_articoli.csv (decimali col punto, pack come intero, NULL→vuoto). Il runtime gestisce comunque i formati locali.
+	•	Ordinamento articoli: ora usa i campi certi Prodotto, Colore e Formato (discendente). Niente più deduzioni dalla descrizione, salvo come ultima spiaggia quando i campi non sono presenti.
+	•	Query DB aggiornate: SELECT include anche Prodotto, Colore, Formato, UM; stessa cosa nell’endpoint scanner per barcode.
+	•	UI ricerca (B2B style):
+• Rimossa colonna EAN13; aggiunta colonna Note (input) e controlli quantità con bottoni −/+ e pulsante “Ordina”.
+• Quantità: interi, max 3 cifre, rispetta pack come min/step, campo compatto.
+• Evidenziazione: le righe già in ordine sono verdi e mostrano badge “In ordine”.
+• Testata risultati fissa: creata intestazione esterna sticky (Codice, Descrizione, Note, Q.tà) allineata con i dati; rimosse sovrapposizioni e spazio inutile.
+	•	Carrello:
+• Rimossa colonna EAN; aggiunta colonna Note editabile.
+• Logica righe: chiave “codice + nota”. Stesso codice e stessa nota si sommano; note diverse creano righe separate. In aggiornamento, se due righe diventano uguali, vengono unite sommando le quantità.
+• Bottone “Aggiorna quantità” rinominato in “Aggiorna”.
+	•	Esportazione ordine: CSV con colonne “codart; quantita; descrizione; note”. Il codice esportato è quello puro (senza la nota nella chiave).
+	•	Codici articolo con virgola: normalizzazione a monte. Ovunque a video e negli export i codici mostrano la virgola (la vista/CSV che usano “_” vengono riconvertiti). La ricerca gestisce entrambi i casi.
+	•	Messaggi ridondanti: rimossi i flash “Aggiunto … / Articolo già in ordine …” in fase di aggiunta dalla ricerca.
+	•	Note: lunghezza massima 30 caratteri, sanificate (niente “||”), placeholder tolto sia in ricerca sia in carrello.
+	•	CSV articoli normalizzato: script dedicato per sovrascrivere mock_articoli.csv (decimali col punto, pack come intero, NULL→vuoto). Il runtime gestisce comunque i formati locali.
 
 Nota: commenti e testi nel codice sono stati portati in italiano nelle parti modificate.
 
 14/09/2025 — Log aggiornamenti recenti
-
-- Badge "In ordine": arancione e allineato a destra nella colonna Descrizione.
-- Riga articoli: controlli quantita con pulsanti -/+ e bottone "Ordina" inline; qty compatta (48px), solo interi, max 999; campo Note senza placeholder.
-- Intestazioni risultati: header esterno sticky allineato con i dati; rimosso spazio eccessivo; larghezze coerenti (Codice 140px, Note 160px, Q.ta 220px).
-- Codici articolo: riconversione "_" -> "," in UI, export, API e ricerca; LIKE DB adeguato.
-- Invio ordine: bottone "Invia Ordine" (ex "Esporta CSV"); download CSV in background; carrello svuotato lato server; modale centrale "Ordine Inviato" con bottone "Continua" che torna alla Ricerca.
-- Carrello: Note senza placeholder.
-- Branding: rinominata l'app in "MyIcorip"; logo aziendale in alto a sinistra (file atteso: static/logo.png) su Ricerca, Ordine, Login e Scanner.
-- Utenti di prova: aggiunti account "Andrea" e "Alice" (password: test) per verificare carrelli separati multi‑device.
-
-- Persistenza carrello su file JSON per utente con TTL 20 giorni (CART_TTL_DAYS) e merge automatico al login.
-- Sincronizzazione multi‑sessione: con un semplice refresh su Ricerca/Ordine il carrello si allinea agli aggiornamenti fatti da altri device (merge basato su updated_at vs cart_synced_at).
+	•	Badge “In ordine”: arancione e allineato a destra nella colonna Descrizione.
+	•	Riga articoli: controlli quantita con pulsanti -/+ e bottone “Ordina” inline; qty compatta (48px), solo interi, max 999; campo Note senza placeholder.
+	•	Intestazioni risultati: header esterno sticky allineato con i dati; rimosso spazio eccessivo; larghezze coerenti (Codice 140px, Note 160px, Q.ta 220px).
+	•	Codici articolo: riconversione “_” -> “,” in UI, export, API e ricerca; LIKE DB adeguato.
+	•	Invio ordine: bottone “Invia Ordine” (ex “Esporta CSV”); download CSV in background; carrello svuotato lato server; modale centrale “Ordine Inviato” con bottone “Continua” che torna alla Ricerca.
+	•	Carrello: Note senza placeholder.
+	•	Branding: rinominata l’app in “MyIcorip”; logo aziendale in alto a sinistra (file atteso: static/logo.png) su Ricerca, Ordine, Login e Scanner.
+	•	Utenti di prova: aggiunti account “Andrea” e “Alice” (password: test) per verificare carrelli separati multi-device.
+	•	Persistenza carrello su file JSON per utente con TTL 20 giorni (CART_TTL_DAYS) e merge automatico al login.
+	•	Sincronizzazione multi-sessione: con un semplice refresh su Ricerca/Ordine il carrello si allinea agli aggiornamenti fatti da altri device (merge basato su updated_at vs cart_synced_at).
 
 16/09/2025
 Aggiornata la vista DMZ vw_AND_webappordini_articoli rigenerandola da produzione con:
@@ -100,52 +118,51 @@ GO
 
 Nota: i server produzione e mock ora espongono tutti i campi necessari; per cambiare la provenienza dati usare REAL_DB=1/0 nel file .env.
 
+19/09/2025 — Configurazione macOS
+	•	Percorso progetto: /Users/andrea/Progetti/waordini
+	•	Virtualenv: source .venv_mac/bin/activate
 
--------------------------------------------------------------
 
-----------------------------------
+⸻
+
+⸻
+
 TODO fine sviluppo (ricordare per produzione):
-- 14/09/2025 — Migrazione a DB per persistenza/storico: introdurre tabelle per carrelli (OrdersCart/OrdersCartItem) e storico ordini + clienti; sostituire il salvataggio JSON con upsert/select su SQL Server. Prevedere anche storico ordini inviati.
-- Reimpostare debug=False in waordini.py (app.run)
-- Disattivare/condizionare TEMPLATES_AUTO_RELOAD (usare FLASK_DEBUG)
-- Riavviare il server per applicare le impostazioni
+	•	14/09/2025 — Migrazione a DB per persistenza/storico: introdurre tabelle per carrelli (OrdersCart/OrdersCartItem) e storico ordini + clienti; sostituire il salvataggio JSON con upsert/select su SQL Server. Prevedere anche storico ordini inviati.
+	•	Reimpostare debug=False in waordini.py (app.run)
+	•	Disattivare/condizionare TEMPLATES_AUTO_RELOAD (usare FLASK_DEBUG)
+	•	Riavviare il server per applicare le impostazioni
 
 TASK:
-  A BREVE/MEDIO
-  - allineare il layout del carrello alla search in termini della colonna quantità con i + e -
-  - ottimizzare UI da tablet e telefono con i +- pack e lo scanner impreciso
-  - Aggiungere il campo NOTE generali di ordine nel carrello in Testata prendere le info da sul
-  - Aggiungere un campo nell'output csv Status valorizzato sempre ad N, serve al gestionale per rilevare gli ordini da importare.	
-  - per sostituire la magagna del csv impostare uno switch per tutti gli articoli 
-  - impostare le macro categorie con bottoni secondo i gruppi
-  - impostare ARCHIVIO ORDINI per utente (id_ord interno?)
-  - creare una HOME di piattafroma friendly con il sito: dashboard con bottoni grossi - ORDINA / ARCHIVIO ORDINI / CATALOGO / ANAGRAFICA / STATISTICHE
-  - GESTIONE ANAGRAFICHE CLIENTI/AGENTI:
-    * a tipologie gruppi per gesitre Agenti che inviano ordini per conto di..
-    * uso clienti che possano vedere i propri PL privatamente
-  - definire il logo MyIcorip (idea del My con il font pennellata di Insieme lasciamo il segno)
+A BREVE/MEDIO
+	•	allineare il layout del carrello alla search in termini della colonna quantità con i + e -
+	•	ottimizzare UI da tablet e telefono con i +- pack e lo scanner impreciso
+	•	Aggiungere il campo NOTE generali di ordine nel carrello in Testata prendere le info da sul
+	•	Aggiungere un campo nell’output csv Status valorizzato sempre ad N, serve al gestionale per rilevare gli ordini da importare.
+	•	per sostituire la magagna del csv impostare uno switch per tutti gli articoli
+	•	impostare le macro categorie con bottoni secondo i gruppi
+	•	impostare ARCHIVIO ORDINI per utente (id_ord interno?)
+	•	creare una HOME di piattafroma friendly con il sito: dashboard con bottoni grossi - ORDINA / ARCHIVIO ORDINI / CATALOGO / ANAGRAFICA / STATISTICHE
+	•	GESTIONE ANAGRAFICHE CLIENTI/AGENTI:
+	•	a tipologie gruppi per gesitre Agenti che inviano ordini per conto di..
+	•	uso clienti che possano vedere i propri PL privatamente
+	•	definire il logo MyIcorip (idea del My con il font pennellata di Insieme lasciamo il segno)
 
-A LUNGO 
-  - integrazione tracking ordini dei corrieri
-  - chatbot AI interno (OpenAI) per risposte rapide ai clienti eventualmente addestrato anche su consigli tecnici
-  - statistiche in dashboard
-  - situazione finanziaria
-
-
+A LUNGO
+	•	integrazione tracking ordini dei corrieri
+	•	chatbot AI interno (OpenAI) per risposte rapide ai clienti eventualmente addestrato anche su consigli tecnici
+	•	statistiche in dashboard
+	•	situazione finanziaria
 
 SNIPPET UTILI (COPIA/INCOLLA VELOCE)
+	•	Logo aziendale in alto a sinistra
+• Percorso file: mettere il logo in static/logo.png (consigliata altezza 28–32 px).
+• HTML (già inserito nei template):
 
-- Logo aziendale in alto a sinistra
-  • Percorso file: mettere il logo in `static/logo.png` (consigliata altezza 28–32 px).
-  • HTML (già inserito nei template):
-    <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" style="height:28px">
-
-- Aggiungere un utente di prova (waordini.py)
-  TEST_USERS = {"Andrea": "test", "Alice": "test", "Marco": "test"}
-
-- Modificare TTL di salvataggio carrello (default 20 giorni)
-  • macOS/Linux (bash):  export CART_TTL_DAYS=30
-  • Windows PowerShell:  $env:CART_TTL_DAYS = "30"
-
-- Dove vengono salvati i carrelli per utente
-  exports/carts/<username>.json  (salvataggio/merge automatici al login e alle modifiche)
+	•	Aggiungere un utente di prova (waordini.py)
+TEST_USERS = {“Andrea”: “test”, “Alice”: “test”, “Marco”: “test”}
+	•	Modificare TTL di salvataggio carrello (default 20 giorni)
+• macOS/Linux (bash):  export CART_TTL_DAYS=30
+• Windows PowerShell:  $env:CART_TTL_DAYS = “30”
+	•	Dove vengono salvati i carrelli per utente
+exports/carts/.json  (salvataggio/merge automatici al login e alle modifiche)
