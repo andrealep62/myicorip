@@ -1,6 +1,6 @@
 — GitHub: come lavorare con il repo privato —
 
-Clona il progetto (solo la prima volta su un nuovo PC):
+Clona il progetto (solo la prima volta su un nuovo PC). All'interno della cartella locale definita per il progetto:
 git clone https://github.com/andrealep62/myicorip.git waordini
 cd waordini
 
@@ -22,10 +22,15 @@ NOTE IMPORTANTI:
 
 Appunti – Riattivare l’ambiente waordini
 
-Ogni volta che apri un nuovo terminale su macOS lancia questi due comandi anche insieme (percorso aggiornato in /Users/andrea/Progetti/waordini):
+Ogni volta che apri un nuovo terminale su macOS lancia questi due comandi anche insieme: 
 
+SUL MAC:
 cd /Users/andrea/Progetti/waordini
 source .venv_mac/bin/activate
+
+SUL PC:
+cd Progetti/waordini
+
 
 Avvia l’app:
 python waordini.py
