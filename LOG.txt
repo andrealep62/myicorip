@@ -1,11 +1,7 @@
 — GitHub: come lavorare con il repo privato —
 
 Per inizializzare una nuova cartella con git di myicorip:
-	* Terminale entra nella cartella che chiami myicoirp
-	* git init
-	* git remote add origin https://github.com/TUO-UTENTE/TUA-REPO.git
-	* git pull origin main
-
+	
 Clona il progetto (solo la prima volta su un nuovo PC). All'interno della cartella locale definita per il progetto:
 git clone https://github.com/andrealep62/myicorip.git myicorip
 cd myicorip
