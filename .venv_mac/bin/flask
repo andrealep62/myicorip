@@ -1,4 +1,4 @@
-#!/Users/andrea/Library/CloudStorage/OneDrive-COLORIFICIOI.CO.RI.P.Spa/myicorip/.venv_mac/bin/python3.12
+#!/Users/andrea/Progetti/myicorip/.venv_mac/bin/python3.13
 import sys
 from flask.cli import main
 if __name__ == '__main__':

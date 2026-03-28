@@ -129,6 +129,52 @@ Nota: i server produzione e mock ora espongono tutti i campi necessari; per camb
 	•	Percorso progetto: /Users/andrea/Progetti/myicorip
 	•	Virtualenv: source .venv_mac/bin/activate
 
+28 MARZO 2026
+Dopo lungo perido di inattività riprendo il progetto per presentarlo e farlo provare.
+ATTIVITA' SVOLTE OGGI:
+
+Ripristino Ambiente di Sviluppo:
+Rigenerato l'ambiente virtuale (.venv_mac) su MacBook Air M2. Risolti i conflitti di librerie (Flask, pyodbc) e configurato correttamente l'interprete Python in Visual Studio Code per puntare alla cartella del progetto.
+
+Configurazione Ibrida Locale/Cloud:
+Configurato il file .env per permettere lo switch tra database reale (SQL Server aziendale via DMZ/VPN) e database simulato (MOCK tramite file CSV). Questo permette di sviluppare e testare l'app anche fuori dall'ufficio senza errori di connessione.
+
+Implementazione Logica Gestionale (Status N):
+Aggiornata la funzione di esportazione ordini. Il file CSV generato ora include correttamente la colonna "status" valorizzata a "N". Questo garantisce la compatibilità con il processo di importazione automatica del gestionale Icosan.
+
+Analisi Infrastruttura VPS:
+Valutata la migrazione su VPS Hostinger (Linux) per test beta pubblici. L'obiettivo è sfruttare le tabelle database del VPS (limite 50MB) per rendere l'app accessibile agli agenti via mobile.
+
+ANALISI STRATEGICA E VISIONE FUTURA:
+
+L'applicazione si evolverà in una piattaforma con gestione differenziata degli accessi basata sul profilo utente:
+
+Profilo 1: AGENTE / UFFICIO COMMERCIALE (Interno)
+
+Funzione: "Invia ordine per conto di".
+
+Workflow: Login -> Dashboard Agente -> Selezione del Cliente (filtrato per l'anagrafica assegnata all'agente) -> Inserimento ordine.
+
+Obiettivo: Sostituire l'attuale modulo ordini Prestashop con uno strumento piu rapido e specifico per il B2B.
+
+Profilo 2: CLIENTE DIRETTO (Esterno)
+
+Funzione: Autogestione ordini.
+
+Workflow: Login -> Dashboard Cliente (catalogo e storico personale) -> Invio ordine diretto.
+
+EVOLUZIONE DELLA PIATTAFORMA:
+Il sistema non sara solo un "prendi-ordini", ma una piattaforma piu ampia che comprendera in futuro consultazione dati, documenti e statistiche.
+
+PROSSIMI STEP OPERATIVI:
+
+Implementazione dello "Split Login": logica che riconosce il tipo di utente e apre la dashboard corretta.
+
+Creazione anagrafica relazionale: file clienti_mock.csv per mappare l'associazione tra ogni agente e i suoi specifici clienti.
+
+Miglioramento UI Carrello: inserimento tasti +/- per gestione quantita rapida (uniformando la ricerca al carrello).
+
+Test di Deploy su VPS Hostinger per l'avvio della fase Beta.
 
 ⸻
 

@@ -834,28 +834,46 @@ def _is_mobile():
 # =========================
 # ROUTES
 # =========================
-@app.route('/login', methods=['GET','POST'])
-def login():
-    if request.method == 'POST':
-        u = request.form.get('username','').strip()
-        p = request.form.get('password','').strip()
-        if TEST_USERS.get(u) == p:
-            session['user'] = {'username': u}
-            session.permanent = (request.form.get('remember') == 'on')
-            # Ripristina carrello persistito e fai merge con l'eventuale carrello in sessione
-            try:
-                persisted = load_persisted_cart(u)
-                current = session.get('cart') or {}
-                merged = merge_carts(persisted, current)
-                session['cart'] = merged
-                session.modified = True
-                # Salva di nuovo (caso di merge)
-                save_persisted_cart(u, merged)
-            except Exception:
-                pass
-            return redirect(url_for('home'))
-        flash('Credenziali non valide', 'danger')
-    return render_template('login.html', title='Login')
+@app.route('/export')
+def export_csv():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    username = session['user']['username']
+    today = datetime.now().strftime('%Y%m%d')
+    key = f'prog_{username}_{today}'
+    prog = session.get(key, 0) + 1
+    session[key] = prog
+    session.modified = True
+    filename = f"{username}_{today}_{prog:03d}.csv"
+
+    cart = _get_cart()
+    rows = []
+    for c, i in cart.items():
+        # c è la chiave composita: "CODART||NOTE"
+        cod = c.split('||', 1)[0]
+        # Aggiungiamo 'N' come quinto elemento della riga (Status)
+        rows.append([cod, i.get('qty', 0), i.get('descr', ''), (i.get('note','') or ''), 'N'])
+
+    sio = StringIO()
+    w = csv.writer(sio, delimiter=';')
+    # Aggiunta 'status' nell'intestazione
+    w.writerow(['codart','quantita','descrizione','note','status'])
+    w.writerows(rows)
+
+    (EXPORT_DIR / filename).write_text(sio.getvalue(), encoding='utf-8')
+
+    # Svuota il carrello dopo l'esportazione
+    session['cart'] = {}
+    session.modified = True
+    try:
+        save_persisted_cart(username, {})
+    except Exception:
+        pass
+
+    resp = make_response(sio.getvalue())
+    resp.headers['Content-Disposition'] = f'attachment; filename={filename}'
+    resp.headers['Content-Type'] = 'text/csv; charset=utf-8'
+    return resp
 
 @app.route('/logout')
 def logout():
@@ -999,45 +1017,6 @@ def remove_item():
     except Exception:
         pass
     return redirect(url_for('cart'))
-@app.route('/export')
-def export_csv():
-    if 'user' not in session:
-        return redirect(url_for('login'))
-    username = session['user']['username']
-    today = datetime.now().strftime('%Y%m%d')
-    key = f'prog_{username}_{today}'
-    prog = session.get(key, 0) + 1
-    session[key] = prog
-    session.modified = True
-    filename = f"{username}_{today}_{prog:03d}.csv"
-
-    cart = _get_cart()
-    # Aggiungi anche le note nel CSV di export
-    rows = []
-    for c, i in cart.items():
-        # c può essere una chiave composita: "CODART||NOTE"
-        cod = c.split('||', 1)[0]
-        rows.append([cod, i.get('qty', 0), i.get('descr', ''), (i.get('note','') or '')])
-
-    sio = StringIO()
-    w = csv.writer(sio, delimiter=';')
-    w.writerow(['codart','quantita','descrizione','note'])
-    w.writerows(rows)
-
-    (EXPORT_DIR / filename).write_text(sio.getvalue(), encoding='utf-8')
-
-    # Svuota il carrello dopo l'esportazione e salva persistenza
-    session['cart'] = {}
-    session.modified = True
-    try:
-        save_persisted_cart(username, {})
-    except Exception:
-        pass
-
-    resp = make_response(sio.getvalue())
-    resp.headers['Content-Disposition'] = f'attachment; filename={filename}'
-    resp.headers['Content-Type'] = 'text/csv; charset=utf-8'
-    return resp
 
 @app.route('/scan')
 def scan():
