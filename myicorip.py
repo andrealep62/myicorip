@@ -881,6 +881,21 @@ def logout():
     flash('Logout effettuato', 'info')
     return redirect(url_for('login'))
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        # Verifica basata sui TEST_USERS a riga 112 del tuo file
+        if username in TEST_USERS and TEST_USERS[username] == password:
+            session.permanent = True
+            session['user'] = {'username': username}
+            flash(f'Benvenuto {username}', 'success')
+            return redirect(url_for('home'))
+        else:
+            flash('Credenziali non valide', 'danger')
+    return render_template('login.html', title='Login')
+
 @app.route('/')
 def home():
     if 'user' not in session:
