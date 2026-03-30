@@ -1155,7 +1155,7 @@ if __name__ == '__main__':
     key_path  = os.environ.get("KEY_PATH",  "certs/127.0.0.1+2-key.pem")
     use_ssl = Path(cert_path).exists() and Path(key_path).exists()
 
-    if use_ssl:
-        app.run(host=host, port=port, debug=True, ssl_context=(cert_path, key_path))
-    else:
-        app.run(host=host, port=port, debug=True)
+    #if use_ssl:
+    #    app.run(host=host, port=port, debug=True, ssl_context=(cert_path, key_path))
+    #else:
+app.run(host=host, port=port, debug=True)
