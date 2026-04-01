@@ -763,16 +763,11 @@ def save_persisted_cart(username: str, cart: dict) -> None:
         pass
 
 def merge_carts(base: dict, incoming: dict) -> dict:
-    """Unisce due carrelli sommando le quantità su chiavi identiche (codice||nota)."""
+    """Unisce due carrelli: se un articolo esiste in entrambi, prevale la quantità dell'incoming."""
     result = dict(base or {})
     for k, v in (incoming or {}).items():
-        if k in result:
-            try:
-                result[k]['qty'] = int(result[k].get('qty', 0) or 0) + int(v.get('qty', 0) or 0)
-            except Exception:
-                result[k]['qty'] = (result[k].get('qty') or 0)
-        else:
-            result[k] = dict(v)
+        # Invece di sommare, sovrascriviamo o aggiungiamo il nuovo
+        result[k] = dict(v)
     return result
  
 def load_persisted_cart_meta(username: str):
@@ -801,29 +796,18 @@ def _iso_to_dt(s: str):
         return None
 
 def maybe_sync_cart_from_persisted():
-    """Se il carrello persistito è più recente di quello in sessione, fai merge e aggiorna la sessione.
-    Utile per multi‑sessione: richiamare nelle pagine principali (home/search/cart).
-    """
+    """Sincronizzazione semplificata: carica dal disco se la sessione è vuota o diversa."""
     try:
         if 'user' not in session:
             return
         username = session['user']['username']
-        persisted_items, ts = load_persisted_cart_meta(username)
-        if not ts:
-            return
-        sess_ts_s = session.get('cart_synced_at')
-        pdt = _iso_to_dt(ts)
-        sdt = _iso_to_dt(sess_ts_s) if sess_ts_s else None
-        if sdt is not None and pdt is not None and not (pdt > sdt):
-            return  # niente da sincronizzare
-        current = session.get('cart') or {}
-        merged = merge_carts(persisted_items, current)
-        session['cart'] = merged
-        # Aggiorna timestamp di sync
-        session['cart_synced_at'] = datetime.now().isoformat(timespec='seconds')
-        session.modified = True
-        # Salva il risultato unificato
-        save_persisted_cart(username, merged)
+        persisted_items = load_persisted_cart(username)
+        
+        if persisted_items:
+            current_cart = session.get('cart') or {}
+            # Uniamo i carrelli usando la nuova logica non-sommatoria
+            session['cart'] = merge_carts(persisted_items, current_cart)
+            session.modified = True
     except Exception:
         pass
 
