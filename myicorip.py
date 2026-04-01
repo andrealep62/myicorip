@@ -39,6 +39,7 @@ from flask import (
     Flask, request, session, redirect, url_for,
     render_template, make_response, flash, jsonify
 )
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 # =========================
 # ENV & OPTIONAL pyodbc
@@ -73,6 +74,10 @@ SQL_TIMEOUT  = int(os.environ.get("SQL_TIMEOUT", "5"))
 # APP BASE
 # =========================
 app = Flask(__name__)
+
+# Questa è la riga fondamentale per gestire il "ponte" con Nginx
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-change-me")
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
 # Abilita auto-reload dei template Jinja in sviluppo
