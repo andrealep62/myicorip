@@ -9,21 +9,28 @@
     <style>
         .btn-dash {
             transition: transform 0.2s ease, box-shadow 0.2s ease;
-            border-radius: 1.2rem;
+            border-radius: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none !important;
+            min-height: 180px;
         }
         .btn-dash:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+            box-shadow: 0 12px 24px rgba(0,0,0,0.15) !important;
         }
-        .bi { font-size: 3rem !important; }
+        .bi { font-size: 3.5rem !important; }
         .bg-icorip { background-color: #004a99; }
+        .text-uppercase-bold { font-weight: 700; letter-spacing: 1px; margin-top: 10px; }
     </style>
 </head>
 <body class="bg-light">
 
 <nav class="navbar navbar-dark shadow-sm mb-4 bg-icorip">
     <div class="container">
-        <span class="navbar-brand mb-0 h1 text-uppercase fw-bold">MyIcorip</span>
+        <a class="navbar-brand mb-0 h1 text-uppercase fw-bold" href="{{ url_for('dashboard') }}">MyIcorip</a>
         <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm rounded-pill">
             <i class="bi bi-box-arrow-right fs-6 me-1"></i> Esci
         </a>
@@ -32,38 +39,40 @@
 
 <div class="container mt-4">
     <div class="text-center mb-5">
-        <h1 class="display-6 fw-bold">Benvenuto, {{ username }}</h1>
-        <p class="lead text-secondary">Seleziona un'operazione per iniziare</p>
+        <h1 class="display-6 fw-bold">Benvenuto, {{ username.capitalize() }}</h1>
+        <p class="lead text-secondary">Seleziona un'operazione</p>
     </div>
 
     <div class="row g-4 justify-content-center">
         
         <div class="col-6 col-sm-5 col-md-4">
-            <a href="{{ url_for('home') }}" class="btn btn-primary btn-dash w-100 py-5 shadow-sm d-flex flex-column align-items-center border-0 bg-icorip">
-                <i class="bi bi-cart-plus-fill mb-2"></i>
-                <span class="fw-bold fs-5">ORDINI</span>
+            <a href="{{ url_for('home') }}" class="btn btn-primary btn-dash w-100 shadow-sm border-0 bg-icorip">
+                <i class="bi bi-cart-plus-fill"></i>
+                <span class="text-uppercase-bold fs-5">ORDINI</span>
             </a>
         </div>
 
+        {% if username.lower() != 'sinergia' %}
         <div class="col-6 col-sm-5 col-md-4">
-            <a href="#" class="btn btn-white btn-dash w-100 py-5 shadow-sm d-flex flex-column align-items-center border bg-white text-secondary">
-                <i class="bi bi-book mb-2"></i>
-                <span class="fw-bold fs-5 text-dark">CATALOGO</span>
+            <a href="#" class="btn btn-info btn-dash w-100 shadow-sm border-0 text-white" style="background-color: #0dcaf0;">
+                <i class="bi bi-person-vcard-fill"></i>
+                <span class="text-uppercase-bold fs-5">SCHEDA CLIENTE</span>
+            </a>
+        </div>
+        {% endif %}
+
+        <div class="col-6 col-sm-5 col-md-4">
+            <a href="https://clicktopaint.it/icorip/" target="_blank" rel="noopener noreferrer" class="btn btn-white btn-dash w-100 shadow-sm border bg-white text-secondary">
+                <i class="bi bi-book"></i>
+                <span class="text-uppercase-bold fs-5 text-dark">CATALOGO</span>
             </a>
         </div>
 
+        {% if username.lower() != 'sinergia' %}
         <div class="col-6 col-sm-5 col-md-4">
-            <a href="#" class="btn btn-white btn-dash w-100 py-5 shadow-sm d-flex flex-column align-items-center border bg-white text-secondary">
-                <i class="bi bi-list-check mb-2"></i>
-                <span class="fw-bold fs-5 text-dark">STATO</span>
-            </a>
-        </div>
-
-        {% if username.lower() in ['andrea', 'roberto'] %}
-        <div class="col-6 col-sm-5 col-md-4">
-            <a href="#" class="btn btn-warning btn-dash w-100 py-5 shadow-sm d-flex flex-column align-items-center border-0 text-dark">
-                <i class="bi bi-wallet2 mb-2"></i>
-                <span class="fw-bold fs-5">SPESE</span>
+            <a href="#" class="btn btn-warning btn-dash w-100 shadow-sm border-0 text-dark">
+                <i class="bi bi-currency-euro"></i>
+                <span class="text-uppercase-bold fs-5">NOTA SPESE</span>
             </a>
         </div>
         {% endif %}
@@ -71,8 +80,8 @@
     </div>
 </div>
 
-<div class="text-center mt-5 text-muted">
-    <small>Versione Unificata 2025.1</small>
+<div class="text-center mt-5 py-4 text-muted border-top mx-5">
+    <small>MyIcorip WebApp — Versione 2026.1</small>
 </div>
 
 </body>
