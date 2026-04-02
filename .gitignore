@@ -1,0 +1,9 @@
+venv/
+.venv/
+venv_mac/
+.venv_mac/
+__pycache__/
+*.pyc
+exports/
+certs/
+.env
