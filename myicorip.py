@@ -41,6 +41,7 @@ from flask import (
 )
 from werkzeug.middleware.proxy_fix import ProxyFix
 from jinja2 import FileSystemLoader
+from functools import wraps
 
 # =========================
 # ENV & OPTIONAL pyodbc
@@ -650,6 +651,15 @@ def _is_mobile():
     keywords = ['iphone', 'ipad', 'android', 'mobile', 'windows phone']
     return any(k in ua for k in keywords)
 
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user' not in session:
+            flash("Effettua il login per accedere a questa pagina", "warning")
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 # =========================
 # ROUTES
 # =========================
@@ -710,7 +720,7 @@ def login():
             session.permanent = True
             session['user'] = {'username': username}
             flash(f'Benvenuto {username}', 'success')
-            return redirect(url_for('home'))
+            return redirect(url_for('dashboard'))
         else:
             flash('Credenziali non valide', 'danger')
     return render_template('login.html', title='Login')
@@ -722,6 +732,14 @@ def home():
     maybe_sync_cart_from_persisted()
     return render_template('home.html', title='Ricerca', q=None, results=None, is_mobile=_is_mobile(), codes_in_cart=_cart_code_set())
 
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    # Estraiamo l'username dal dizionario salvato in sessione (riga 525 del tuo file)
+    user_data = session.get('user', {})
+    username = user_data.get('username', 'Utente')
+    
+    return render_template('dashboard.html', username=username)
 @app.route('/search', methods=['GET','POST'])
 def search():
     if 'user' not in session:
