@@ -3,8 +3,7 @@
   "openaiCodex.autoApplyEdits": true,
   "openaiCodex.askMode": "session",
   "openaiCodex.autoApproveShell": true,
-  "python-envs.defaultEnvManager": "ms-python.python:system",
-  "python-envs.pythonProjects": [],
+  "python-envs.defaultEnvManager": "ms-python.python:venv",
   "python.terminal.useEnvFile": true
 }
 

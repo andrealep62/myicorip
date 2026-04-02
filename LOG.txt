@@ -129,13 +129,158 @@ Nota: i server produzione e mock ora espongono tutti i campi necessari; per camb
 	•	Percorso progetto: /Users/andrea/Progetti/myicorip
 	•	Virtualenv: source .venv_mac/bin/activate
 
+28 MARZO 2026
+Dopo lungo perido di inattività riprendo il progetto per presentarlo e farlo provare.
+ATTIVITA' SVOLTE OGGI:
+
+Ripristino Ambiente di Sviluppo:
+Rigenerato l'ambiente virtuale (.venv_mac) su MacBook Air M2. Risolti i conflitti di librerie (Flask, pyodbc) e configurato correttamente l'interprete Python in Visual Studio Code per puntare alla cartella del progetto.
+
+Configurazione Ibrida Locale/Cloud:
+Configurato il file .env per permettere lo switch tra database reale (SQL Server aziendale via DMZ/VPN) e database simulato (MOCK tramite file CSV). Questo permette di sviluppare e testare l'app anche fuori dall'ufficio senza errori di connessione.
+
+Implementazione Logica Gestionale (Status N):
+Aggiornata la funzione di esportazione ordini. Il file CSV generato ora include correttamente la colonna "status" valorizzata a "N". Questo garantisce la compatibilità con il processo di importazione automatica del gestionale Icosan.
+
+Analisi Infrastruttura VPS:
+Valutata la migrazione su VPS Hostinger (Linux) per test beta pubblici. L'obiettivo è sfruttare le tabelle database del VPS (limite 50MB) per rendere l'app accessibile agli agenti via mobile.
+
+ANALISI STRATEGICA E VISIONE FUTURA:
+
+L'applicazione si evolverà in una piattaforma con gestione differenziata degli accessi basata sul profilo utente:
+
+Profilo 1: AGENTE / UFFICIO COMMERCIALE (Interno)
+
+Funzione: "Invia ordine per conto di".
+
+Workflow: Login -> Dashboard Agente -> Selezione del Cliente (filtrato per l'anagrafica assegnata all'agente) -> Inserimento ordine.
+
+Obiettivo: Sostituire l'attuale modulo ordini Prestashop con uno strumento piu rapido e specifico per il B2B.
+
+Profilo 2: CLIENTE DIRETTO (Esterno)
+
+Funzione: Autogestione ordini.
+
+Workflow: Login -> Dashboard Cliente (catalogo e storico personale) -> Invio ordine diretto.
+
+EVOLUZIONE DELLA PIATTAFORMA:
+Il sistema non sara solo un "prendi-ordini", ma una piattaforma piu ampia che comprendera in futuro consultazione dati, documenti e statistiche.
+
+PROSSIMI STEP OPERATIVI:
+
+Implementazione dello "Split Login": logica che riconosce il tipo di utente e apre la dashboard corretta.
+
+Creazione anagrafica relazionale: file clienti_mock.csv per mappare l'associazione tra ogni agente e i suoi specifici clienti.
+
+Miglioramento UI Carrello: inserimento tasti +/- per gestione quantita rapida (uniformando la ricerca al carrello).
+
+Test di Deploy su VPS Hostinger per l'avvio della fase Beta.
+ultimi lavori del giorno 28 marzo:
+DIAGNOSI: Porta 5001 aperta con successo su Hostinger. L'applicazione riceve la chiamata ma non invia dati (timeout interno).
+CAUSA PROBABILE: L'app si blocca nel tentativo di inizializzare componenti (DB o percorsi file) non presenti sul server o incompatibili con il server di sviluppo Flask su Linux.
+STRATEGIA: Migrazione a stack Nginx + Gunicorn per garantire stabilità e compatibilità mobile.
+
+31 MARZO 2026
+
+Configurazione Nginx: Spostata la configurazione dal file sites-available direttamente nel "cuore" di /etc/nginx/nginx.conf per evitare conflitti con file predefiniti.
+
+Server Block: Impostato un server_name _; (universale) e configurato come default_server sulla porta 80 per catturare tutto il traffico in entrata.
+
+Proxy Pass: Collegato Nginx all'app Flask che gira su 127.0.0.1:5001.
+
+Permessi Cartella: Sbloccati i permessi della cartella /root con chmod 755 per permettere a Nginx di accedere all'applicazione.
+
+Headers di Sicurezza: Configurato il protocollo X-Forwarded-Proto su https per comunicare correttamente con Cloudflare.
+
+Debug Cloudflare: Testate le modalità SSL Flexible e Full e svuotata la cache ("Purge Everything") per eliminare i vecchi errori 404.
+Problema di page not found persiste su https://myicorip.solverstudio.cloud/login
+
+1 APRILE 2026
+
+Stato: Produzione / Stabile
+
+Dominio: myicorip.solverstudio.cloud
+
+1. Architettura del Sistema
+L'applicazione segue un modello Reverse Proxy a tre livelli:
+
+Cloudflare (Edge): Gestisce il DNS e fornisce la protezione SSL iniziale (Modalità: Full Strict).
+
+Nginx (Web Server): Riceve le chiamate sulla porta 443 (HTTPS), gestisce i certificati SSL locali e le "gira" all'applicazione Flask.
+
+Gunicorn/Flask (App): L'applicazione Python che gira internamente sulla porta 5001.
+
+2. Configurazione Nginx (/etc/nginx/nginx.conf)
+Abbiamo pulito il file eliminando i blocchi duplicati. La struttura attuale prevede:
+
+Blocco Porta 80: Esegue un redirect 301 permanente verso HTTPS.
+
+Blocco Porta 443:
+
+Utilizza i certificati emessi da Certbot (Let's Encrypt).
+
+Inoltra il traffico a http://127.0.0.1:5001.
+
+Importante: Passa gli header X-Forwarded-Proto https e X-Forwarded-For per mantenere l'integrità dei dati dell'utente.
+
+3. Gestione del Servizio (systemd)
+L'app non viene più lanciata manualmente. È stato creato un servizio di sistema:
+
+File: /etc/systemd/system/myicorip.service
+
+Comandi utili:
+
+sudo systemctl restart myicorip (per aggiornare dopo un git pull).
+
+sudo systemctl status myicorip (per verificare che sia "active").
+
+journalctl -u myicorip -f (per vedere i log dell'app in tempo reale).
+
+4. Modifiche al Codice (myicorip.py)
+È stato aggiunto il middleware ProxyFix di Werkzeug:
+
+Python
+from werkzeug.middleware.proxy_fix import ProxyFix
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+
+Questo serve a far capire a Flask che, anche se riceve traffico in HTTP sulla 5001, l'utente finale è in HTTPS, evitando errori di sessione e redirect infiniti.
+
+Da cellualre la fotocamera funziona. da migliorare la ux per l'aggiunta articoli
+
+02 APRILE 2026
+✅ SINCRONIZZAZIONE CLOUD:
+- Implementata funzione 'maybe_sync_cart_from_persisted()'.
+- Il carrello viene ora ricaricato dal server a ogni accesso alla pagina /cart.
+- Aggiunto tasto manuale "🔄 Sincronizza" nella navbar.
+
+✅ REFACTORING TEMPLATES:
+- Rimossi tutti i template HTML dal file myicorip.py (circa 150 righe eliminate).
+- Configurato FileSystemLoader per usare esclusivamente la cartella fisica 'templates/'.
+
+✅ MIGLIORAMENTO UX CARRELLO:
+- Inseriti tasti [+] e [-] laterali per la quantità.
+- I tasti rispettano lo 'step' (confezione) dell'articolo.
+- Nascondere freccine native del browser tramite CSS webkit-spin-button.
+- Sistemato bug grafico dei cestini (icone rimozione) fuori tabella.
+- Allineamento verticale 'align-middle' per una lettura più pulita della riga.
+
+✅ NAVIGAZIONE:
+- Tasto "Continua acquisti" rinominato in "Aggiungi altri articoli".
+- Implementata memoria dell'ultima ricerca: tornando dal carrello, l'app mostra i risultati precedenti.
+
+✅ MULTI-UTENTE:
+- Ampliato dizionario TEST_USERS (aggiunti Roberto, Samantha, Sinergia).
+- Confermata separazione dei carrelli tramite cartelle dedicate in EXPORT_DIR/carts/.
+
+
+
+
+
 
 ⸻
 
-⸻
-
-TODO fine sviluppo (ricordare per produzione):
-	•	14/09/2025 — Migrazione a DB per persistenza/storico: introdurre tabelle per carrelli (OrdersCart/OrdersCartItem) e storico ordini + clienti; sostituire il salvataggio JSON con upsert/select su SQL Server. Prevedere anche storico ordini inviati.
+TODO fine sviluppo quando il progetto verrà approvato e finanziato (ricordare per produzione):
+	•	Migrazione a DB per persistenza/storico: introdurre tabelle per carrelli (OrdersCart/OrdersCartItem) e storico ordini + clienti; sostituire il salvataggio JSON con upsert/select su SQL Server. Prevedere anche storico ordini inviati.
 	•	Reimpostare debug=False in myicorip.py (app.run)
 	•	Disattivare/condizionare TEMPLATES_AUTO_RELOAD (usare FLASK_DEBUG)
 	•	Riavviare il server per applicare le impostazioni
@@ -151,7 +296,7 @@ A BREVE/MEDIO
 	•	impostare ARCHIVIO ORDINI per utente (id_ord interno?)
 	•	creare una HOME di piattafroma friendly con il sito: dashboard con bottoni grossi - ORDINA / ARCHIVIO ORDINI / CATALOGO / ANAGRAFICA / STATISTICHE
 	•	GESTIONE ANAGRAFICHE CLIENTI/AGENTI:
-	•	a tipologie gruppi per gesitre Agenti che inviano ordini per conto di..
+	•	a tipologie gruppi per gesitre Agenti che inviano ordini per conto di.. oppure con strumento di carico nota spese e altro
 	•	uso clienti che possano vedere i propri PL privatamente
 	•	definire il logo MyIcorip (idea del My con il font pennellata di Insieme lasciamo il segno)
 
