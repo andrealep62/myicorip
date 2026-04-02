@@ -1,0 +1,10 @@
+# Ambiente e segreti
+venv/
+.env
+__pycache__/
+
+# Dati temporanei (Andrea.json, ecc.)
+exports/
+
+# Files inutili del Mac
+.DS_Store
