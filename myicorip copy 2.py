@@ -108,14 +108,7 @@ def _cart_code_set():
     return codes
 
 # Utenti di prova (multi‑utente per test carrelli)
-TEST_USERS = {
-    "Andrea": "test", 
-    "Alice": "test", 
-    "Renato": "test",
-    "Roberto": "test",
-    "Samantha": "test",
-    "Sinergia": "test"
-} 
+TEST_USERS = {"Andrea": "test", "Alice": "test", "Renato": "test"}
 EXPORT_DIR = Path(os.environ.get("EXPORT_DIR", "exports"))
 EXPORT_DIR.mkdir(parents=True, exist_ok=True)
 # Cartelle per la persistenza del carrello per utente
@@ -728,12 +721,13 @@ def search():
         return redirect(url_for('login'))
 
     if request.method == 'POST':
+        # Arriva dalla form: salvo la query e faccio PRG → redirect su GET
         q = request.form.get('q','').strip()
         session['last_q'] = q
         return redirect(url_for('search', q=q))
 
-    # Se arriviamo qui in GET (cliccando un link), prova a recuperare l'ultima ricerca
-    q = request.args.get('q') or session.get('last_q') or ''
+    # GET: prendo dalla querystring o, se manca, dall'ultima ricerca salvata
+    q = (request.args.get('q') or session.get('last_q') or '').strip()
     maybe_sync_cart_from_persisted()
     results = search_products(q) if q else []
     return render_template('home.html', title='Ricerca', q=q, results=results, is_mobile=_is_mobile(), codes_in_cart=_cart_code_set())
