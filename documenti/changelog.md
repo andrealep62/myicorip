@@ -2,6 +2,15 @@
 
 ---
 
+## 19/05/2026 — Vista articoli: tracciato completo
+
+- Aggiunta query SQL `documenti/vista articoli.sql` per generare il CSV mock da SSMS
+- Esteso tracciato: Pack (INT), Prodotto, Colore (da tabhhca), Formato, Gruppo, S_Gruppo, cod_catalogo, desc_catalogo (da tabhhcg)
+- Cast tipi numerici: Pack e Dispnetta come INT, pesotassabile/Prezzo/PrezzoNoIva/Iva come DECIMAL(10,2)
+- Aggiornato `mock_articoli.csv` con il tracciato completo
+
+---
+
 ## 19/05/2026 — Dashboard e CSV export
 
 - Dashboard: bottone "NOTA SPESE" rinominato in "ARCHIVIO ORDINI" (icona `clock-history`); visibile a tutti gli utenti incluso Sinergia
