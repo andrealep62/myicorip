@@ -2,7 +2,8 @@ SELECT replace(dbo.artico.ar_codart,',','_') AS [Codice Articolo], dbo.artico.ar
 dbo.artico.ar_unmis AS UM, dbo.artico.ar_hhcodhhwb AS ID_Prodotto, dbo.artico.ar_hhvarwb AS ID_variante,dbo.artico.ar_hhdeshhwb AS Descr_web, CAST(dbo.artico.ar_hhpesotassabile AS DECIMAL(10,2)) AS pesotassabile,
 CAST(ISNULL(listini.lc_prezzo, 0) AS DECIMAL(10,2)) AS Prezzo, CAST(ISNULL(listini.lc_prezzo, 0) AS DECIMAL(10,2)) AS PrezzoNoIva, CAST(22 AS DECIMAL(5,2)) AS Iva, CAST(ISNULL(artpro.ap_esist - artpro.ap_impeg, 0) AS INT) AS Dispnetta,
 CAST(dbo.artico.ar_qtacon2 AS INT) AS Pack, dbo.artico.ar_hhnomeprodotto AS Prodotto, tabhhca.tb_deshhca AS Colore, dbo.artico.ar_hhqtacon4 AS Formato,
-dbo.artico.ar_gruppo AS Gruppo, dbo.artico.ar_sotgru AS S_Gruppo
+dbo.artico.ar_gruppo AS Gruppo, dbo.artico.ar_sotgru AS S_Gruppo,
+tabhhcg.tb_codhhcg AS cod_catalogo, tabhhcg.tb_deshhcg AS desc_catalogo
 FROM     dbo.artico
 LEFT JOIN barcode on ar_codart = bc_codart
 LEFT OUTER JOIN (SELECT codditt, ap_codart, ap_magaz, ap_esist, ap_prenot, ap_ordin, ap_impeg, ap_carfor, ap_carpro, ap_carvar, ap_rescli, ap_scacli, ap_scapro,
@@ -19,4 +20,5 @@ AND CAST(GETDATE() AS DATE) BETWEEN CAST (lc_datagg AS DATE) AND CAST (lc_datsca
 listini.lc_codart = dbo.artico.ar_codart
 LEFT JOIN tabmarc ON tabmarc.codditt = artico.codditt AND tabmarc.tb_codmarc = artico.ar_codmarc
 LEFT JOIN tabhhca ON tabhhca.tb_codhhca = artico.ar_hhcolore
+LEFT JOIN tabhhcg ON tabhhcg.tb_codhhcg = artico.ar_hhcatalogo
 WHERE  (ISNULL(dbo.artico.ar_hhflwb, 'N') = 'S')
