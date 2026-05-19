@@ -678,15 +678,12 @@ def export_csv():
     cart = _get_cart()
     rows = []
     for c, i in cart.items():
-        # c è la chiave composita: "CODART||NOTE"
         cod = c.split('||', 1)[0]
-        # Aggiungiamo 'N' come quinto elemento della riga (Status)
-        rows.append([cod, i.get('qty', 0), i.get('descr', ''), (i.get('note','') or ''), 'N'])
+        rows.append([cod, i.get('qty', 0)])
 
     sio = StringIO()
     w = csv.writer(sio, delimiter=';')
-    # Aggiunta 'status' nell'intestazione
-    w.writerow(['codart','quantita','descrizione','note','status'])
+    w.writerow(['codart', 'quantita'])
     w.writerows(rows)
 
     (EXPORT_DIR / filename).write_text(sio.getvalue(), encoding='utf-8')
