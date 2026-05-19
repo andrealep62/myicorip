@@ -2,6 +2,13 @@
 
 ---
 
+## 19/05/2026 — Dashboard e CSV export
+
+- Dashboard: bottone "NOTA SPESE" rinominato in "ARCHIVIO ORDINI" (icona `clock-history`); visibile a tutti gli utenti incluso Sinergia
+- CSV export ordini: tracciato ridotto a 2 colonne `codart;quantita` (rimossi descrizione, note, status)
+
+---
+
 ## 02/04/2026 — Sincronizzazione, Refactoring e UX
 
 - Implementata funzione `maybe_sync_cart_from_persisted()` — il carrello viene ricaricato dal server a ogni accesso a `/cart`
