@@ -58,7 +58,7 @@
 
   <div class="d-flex align-items-center gap-2 mb-3">
     <h1 class="h4 mb-0 text-nowrap">Ordine per:</h1>
-    <input type="text" id="campo-cliente" maxlength="40" class="form-control text-upper" style="max-width:260px" placeholder="Nome cliente">
+    <span id="lbl-cliente-cart" class="fw-bold" style="color:#072b5f; font-size:1.1rem">—</span>
   </div>
 
   {% if cart %}
@@ -148,22 +148,19 @@
 
 <script>
   (function(){
-    // Uppercase in tempo reale + salvataggio sessionStorage per campo-cliente
+    // Uppercase in tempo reale per le note di riga
     document.addEventListener('input', function(e) {
       if (!e.target.classList.contains('text-upper')) return;
       var pos = e.target.selectionStart;
       e.target.value = e.target.value.toUpperCase();
       e.target.setSelectionRange(pos, pos);
-      if (e.target.id === 'campo-cliente') {
-        sessionStorage.setItem('myicorip_cliente', e.target.value);
-      }
     });
 
-    // Ripristina nome cliente da sessionStorage
-    var _clienteInput = document.getElementById('campo-cliente');
-    if (_clienteInput) {
+    // Mostra nome cliente da sessionStorage (sola lettura)
+    var _lbl = document.getElementById('lbl-cliente-cart');
+    if (_lbl) {
       var _saved = sessionStorage.getItem('myicorip_cliente');
-      if (_saved) _clienteInput.value = _saved;
+      _lbl.textContent = _saved ? _saved : '—';
     }
 
     const btn = document.getElementById('btn-export');
@@ -176,8 +173,7 @@
       if (mdl) mdl.style.display = 'flex';
       const iframe = document.createElement('iframe');
       iframe.style.display = 'none';
-      const clienteInput = document.getElementById('campo-cliente');
-      const cliente = clienteInput ? clienteInput.value.trim() : '';
+      const cliente = (sessionStorage.getItem('myicorip_cliente') || '').trim();
       iframe.src = '{{ url_for('export_csv') }}' + (cliente ? '?cliente=' + encodeURIComponent(cliente) : '');
       document.body.appendChild(iframe);
     });

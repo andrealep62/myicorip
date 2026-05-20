@@ -16,7 +16,6 @@
       </a>
       {% if session.get('user') %}
         <span class="navbar-text text-muted small ms-1">Ciao {{ session['user']['username'] }}</span>
-        <span id="lbl-cliente" class="navbar-text fw-bold ms-1" style="display:none; color:#072b5f; font-size:1rem"></span>
       {% endif %}
     </div>
     <div class="d-flex">
@@ -98,7 +97,10 @@
   {% endwith %}
 
   <div class="sticky-sub pb-2">
-    <h1 class="h4 mb-2">Ricerca articoli</h1>
+    <div class="d-flex align-items-center gap-2 mb-2">
+      <h1 class="h4 mb-0 text-nowrap">Ordine per:</h1>
+      <input type="text" id="campo-cliente" maxlength="40" class="form-control text-upper" style="max-width:260px" placeholder="Nome cliente">
+    </div>
 
     <form method="post" action="{{ url_for('search') }}" class="row g-2 mb-2">
       <div class="col-sm-8">
@@ -217,7 +219,19 @@
       var pos = e.target.selectionStart;
       e.target.value = e.target.value.toUpperCase();
       e.target.setSelectionRange(pos, pos);
+      if (e.target.id === 'campo-cliente') {
+        sessionStorage.setItem('myicorip_cliente', e.target.value);
+      }
     });
+
+    // Ripristina nome cliente da sessionStorage
+    (function() {
+      var cc = document.getElementById('campo-cliente');
+      if (cc) {
+        var _c = sessionStorage.getItem('myicorip_cliente');
+        if (_c) cc.value = _c;
+      }
+    })();
 
     // Salva posizione scroll quando si lascia la pagina di ricerca
     var _srchQ = {{ (q or '')|tojson }};
@@ -241,12 +255,6 @@
       } catch(e) {}
     })();
 
-    // Mostra il cliente attivo in navbar (da sessionStorage)
-    (function() {
-      var c = sessionStorage.getItem('myicorip_cliente');
-      var lbl = document.getElementById('lbl-cliente');
-      if (c && lbl) { lbl.textContent = 'Ordine per: ' + c; lbl.style.display = ''; }
-    })();
 
     // AJAX "Ordina" — non ricarica la pagina, preserva posizione scroll
     document.addEventListener('submit', function(e) {
