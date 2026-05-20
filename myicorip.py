@@ -669,21 +669,24 @@ def export_csv():
         return redirect(url_for('login'))
     username = session['user']['username']
     today = datetime.now().strftime('%Y%m%d')
-    key = f'prog_{username}_{today}'
-    prog = session.get(key, 0) + 1
-    session[key] = prog
-    session.modified = True
-    filename = f"{username}_{today}_{prog:03d}.csv"
+
+    cliente_raw = (request.args.get('cliente') or '').strip()[:40]
+    cliente_safe = ''.join(c if (c.isalnum() or c in ('_', '-')) else '' for c in cliente_raw.replace(' ', '_'))
+
+    if cliente_safe:
+        filename = f"{username}_{today}-{cliente_safe}.csv"
+    else:
+        filename = f"{username}_{today}.csv"
 
     cart = _get_cart()
     rows = []
-    for c, i in cart.items():
+    for c, i in sorted(cart.items(), key=lambda kv: kv[1].get('seq', 0)):
         cod = c.split('||', 1)[0]
-        rows.append([cod, i.get('qty', 0)])
+        rows.append([cod, i.get('qty', 0), i.get('descr', ''), i.get('note', '')])
 
     sio = StringIO()
     w = csv.writer(sio, delimiter=';')
-    w.writerow(['codart', 'quantita'])
+    w.writerow(['codart', 'quantita', 'descrizione', 'note'])
     w.writerows(rows)
 
     (EXPORT_DIR / filename).write_text(sio.getvalue(), encoding='utf-8')
@@ -771,7 +774,7 @@ def add_to_cart():
     if already:
         cart[key]['qty'] += qty
     else:
-        cart[key] = {'codart': codart, 'descr': descr, 'ean': ean, 'qty': qty, 'pack': pack, 'note': note}
+        cart[key] = {'codart': codart, 'descr': descr, 'ean': ean, 'qty': qty, 'pack': pack, 'note': note, 'seq': len(cart)}
     session.modified = True
     # Salva persistenza
     try:
@@ -789,9 +792,10 @@ def add_to_cart():
 
 @app.route('/cart')
 def cart():
-    # Forza il caricamento dal server PRIMA di mostrare la pagina
-    maybe_sync_cart_from_persisted() 
-    return render_template('cart.html', title='Ordine', cart=_get_cart())
+    maybe_sync_cart_from_persisted()
+    cart_data = _get_cart()
+    cart_sorted = dict(sorted(cart_data.items(), key=lambda kv: kv[1].get('seq', 0)))
+    return render_template('cart.html', title='Ordine', cart=cart_sorted)
 
 @app.route('/update', methods=['POST'])
 def update_cart():
@@ -826,6 +830,7 @@ def update_cart():
             clone['qty'] = newq
             clone['note'] = new_note
             clone['codart'] = cod_puro
+            clone['seq'] = item.get('seq', 0)
             new_cart[new_key] = clone
 
     session['cart'] = new_cart
@@ -901,7 +906,7 @@ def api_cart_add():
     if already:
         cart[key]['qty'] += qty
     else:
-        cart[key] = {'codart': codart, 'descr': descr, 'ean': ean, 'qty': qty, 'pack': pack, 'note': note}
+        cart[key] = {'codart': codart, 'descr': descr, 'ean': ean, 'qty': qty, 'pack': pack, 'note': note, 'seq': len(cart)}
     session.modified = True
     try:
         save_persisted_cart(session['user']['username'], _get_cart())

@@ -56,7 +56,10 @@
     {% endif %}
   {% endwith %}
 
-  <h1 class="h4 mb-3">Ordine</h1>
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <h1 class="h4 mb-0 text-nowrap">Ordine per:</h1>
+    <input type="text" id="campo-cliente" maxlength="40" class="form-control text-upper" style="max-width:260px" placeholder="Nome cliente">
+  </div>
 
   {% if cart %}
     <form method="post" action="{{ url_for('update_cart') }}">
@@ -82,7 +85,7 @@
                 {% endif %}
               </td>
               <td>
-                <input name="note_{{ codart }}" maxlength="30" class="form-control form-control-sm" value="{{ item.note or '' }}">
+                <input name="note_{{ codart }}" maxlength="30" class="form-control form-control-sm text-upper" value="{{ item.note or '' }}">
               </td>
               <td>
                 <div class="input-group input-group-sm flex-nowrap" style="max-width: 150px;">
@@ -133,6 +136,7 @@
   .modal-backdrop-lite { position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 3000; display: none; }
   .modal-panel-lite { position: fixed; inset: 0; display: none; z-index: 3010; align-items: center; justify-content: center; }
   .modal-panel-lite .box { background: #fff; padding: 18px 24px; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.25); min-width: 280px; text-align: center; }
+  .text-upper { text-transform: uppercase; }
 </style>
 <div id="mdl-bg" class="modal-backdrop-lite"></div>
 <div id="mdl" class="modal-panel-lite">
@@ -144,6 +148,24 @@
 
 <script>
   (function(){
+    // Uppercase in tempo reale + salvataggio sessionStorage per campo-cliente
+    document.addEventListener('input', function(e) {
+      if (!e.target.classList.contains('text-upper')) return;
+      var pos = e.target.selectionStart;
+      e.target.value = e.target.value.toUpperCase();
+      e.target.setSelectionRange(pos, pos);
+      if (e.target.id === 'campo-cliente') {
+        sessionStorage.setItem('myicorip_cliente', e.target.value);
+      }
+    });
+
+    // Ripristina nome cliente da sessionStorage
+    var _clienteInput = document.getElementById('campo-cliente');
+    if (_clienteInput) {
+      var _saved = sessionStorage.getItem('myicorip_cliente');
+      if (_saved) _clienteInput.value = _saved;
+    }
+
     const btn = document.getElementById('btn-export');
     const bg = document.getElementById('mdl-bg');
     const mdl = document.getElementById('mdl');
@@ -154,12 +176,15 @@
       if (mdl) mdl.style.display = 'flex';
       const iframe = document.createElement('iframe');
       iframe.style.display = 'none';
-      iframe.src = '{{ url_for('export_csv') }}';
+      const clienteInput = document.getElementById('campo-cliente');
+      const cliente = clienteInput ? clienteInput.value.trim() : '';
+      iframe.src = '{{ url_for('export_csv') }}' + (cliente ? '?cliente=' + encodeURIComponent(cliente) : '');
       document.body.appendChild(iframe);
     });
     if (btnCont) {
       btnCont.addEventListener('click', function(e){
         e.preventDefault();
+        sessionStorage.removeItem('myicorip_cliente');
         window.location.href = '{{ url_for('home') }}';
       });
     }

@@ -16,6 +16,7 @@
       </a>
       {% if session.get('user') %}
         <span class="navbar-text text-muted small ms-1">Ciao {{ session['user']['username'] }}</span>
+        <span id="lbl-cliente" class="navbar-text fw-bold ms-1" style="display:none; color:#072b5f; font-size:1rem"></span>
       {% endif %}
     </div>
     <div class="d-flex">
@@ -78,6 +79,13 @@
 
   /* Badge arancione per stato "In ordine" */
   .badge-order { background-color: #fd7e14; color: #fff; }
+  /* Highlight riga al hover su schermi grandi */
+  .sticky-table tbody tr:hover > * { background-color: rgba(13, 110, 253, 0.09) !important; transition: background-color 0.12s; }
+  /* Riga selezionata da tastiera */
+  .sticky-table tbody tr.row-focused > * { background-color: rgba(13, 110, 253, 0.20) !important; }
+  .sticky-table tbody tr:focus { outline: none; }
+  /* Forza maiuscolo visivo nei campi note/cliente */
+  .text-upper { text-transform: uppercase; }
 </style>
 
 <div class="container">
@@ -146,7 +154,7 @@
               </td>
               <td style="width:160px">
                 {% set fid = 'f_' + r.codart|replace('.','_')|replace(',', '_') %}
-                <input name="note" maxlength="30" class="form-control form-control-sm" form="{{ fid }}" style="max-width:160px">
+                <input name="note" maxlength="30" class="form-control form-control-sm text-upper" form="{{ fid }}" style="max-width:160px">
               </td>
               <td style="width:220px">
 <form id="{{ fid }}" method="post" action="{{ url_for('add_to_cart') }}" class="d-flex gap-2 justify-content-end align-items-center">
@@ -203,6 +211,93 @@
     window.addEventListener('resize', setHeights);
     document.addEventListener('DOMContentLoaded', setHeights);
 
+    // Uppercase in tempo reale per campi con classe text-upper
+    document.addEventListener('input', function(e) {
+      if (!e.target.classList.contains('text-upper')) return;
+      var pos = e.target.selectionStart;
+      e.target.value = e.target.value.toUpperCase();
+      e.target.setSelectionRange(pos, pos);
+    });
+
+    // Salva posizione scroll quando si lascia la pagina di ricerca
+    var _srchQ = {{ (q or '')|tojson }};
+    function _saveScroll() {
+      if (document.querySelector('.results-wrap') && _srchQ !== '') {
+        sessionStorage.setItem('srch_scroll', JSON.stringify({ q: _srchQ, y: window.scrollY }));
+      }
+    }
+    window.addEventListener('beforeunload', _saveScroll);
+    window.addEventListener('pagehide', _saveScroll);
+    // Ripristina scroll se si torna alla stessa ricerca
+    (function() {
+      try {
+        var s = JSON.parse(sessionStorage.getItem('srch_scroll') || 'null');
+        if (s && s.q === _srchQ && s.q !== '' && s.y > 0) {
+          sessionStorage.removeItem('srch_scroll');
+          window.addEventListener('load', function() {
+            requestAnimationFrame(function() { window.scrollTo(0, s.y); });
+          });
+        }
+      } catch(e) {}
+    })();
+
+    // Mostra il cliente attivo in navbar (da sessionStorage)
+    (function() {
+      var c = sessionStorage.getItem('myicorip_cliente');
+      var lbl = document.getElementById('lbl-cliente');
+      if (c && lbl) { lbl.textContent = 'Ordine per: ' + c; lbl.style.display = ''; }
+    })();
+
+    // AJAX "Ordina" — non ricarica la pagina, preserva posizione scroll
+    document.addEventListener('submit', function(e) {
+      const form = e.target;
+      if (!form.action || !form.action.includes('/add')) return;
+      e.preventDefault();
+      const data = new FormData(form);
+      fetch('/api/cart/add', { method: 'POST', body: data })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+          // Aggiorna badge carrello
+          const cartBtn = document.querySelector('a.btn-outline-primary');
+          if (cartBtn && res.cart_lines != null) {
+            let badge = cartBtn.querySelector('.badge.bg-danger');
+            if (res.cart_lines > 0) {
+              if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger';
+                cartBtn.appendChild(badge);
+              }
+              badge.textContent = res.cart_lines;
+            }
+          }
+          // Feedback sul bottone Ordina
+          const btn = form.querySelector('.btn-success');
+          if (btn) {
+            const orig = btn.textContent;
+            btn.textContent = '✓';
+            btn.classList.replace('btn-success', 'btn-secondary');
+            setTimeout(function() {
+              btn.textContent = orig;
+              btn.classList.replace('btn-secondary', 'btn-success');
+            }, 1200);
+          }
+          // Marca la riga come "in ordine"
+          const row = form.closest('tr');
+          if (row) {
+            row.classList.add('table-success');
+            const descDiv = row.querySelector('td:nth-child(2) .d-flex');
+            if (descDiv && !descDiv.querySelector('.badge-order')) {
+              const b = document.createElement('span');
+              b.className = 'badge rounded-pill badge-order ms-2 ms-auto';
+              b.title = 'Già in ordine';
+              b.textContent = 'In ordine';
+              descDiv.appendChild(b);
+            }
+          }
+        })
+        .catch(function() { form.submit(); });
+    });
+
     // Gestione +/- per i controlli quantità
     document.addEventListener('click', function(e) {
       const dec = e.target.closest('.btn-qty-dec');
@@ -224,6 +319,139 @@
       }
       input.value = String(Math.min(max, Math.max(min, val)));
     });
+
+    // Navigazione da tastiera nella griglia risultati
+    (function() {
+      var searchInput = document.querySelector('input[name="q"]');
+      var tbody = document.querySelector('.sticky-table tbody');
+      if (!searchInput || !tbody) return;
+
+      var PAGE_STEP = 5;
+
+      function rows() { return Array.from(tbody.querySelectorAll('tr')); }
+
+      function focusRow(row) {
+        rows().forEach(function(r) { r.classList.remove('row-focused'); });
+        if (!row) return;
+        row.classList.add('row-focused');
+        row.focus();
+        row.scrollIntoView({ block: 'nearest' });
+      }
+
+      function clearFocus() {
+        rows().forEach(function(r) { r.classList.remove('row-focused'); });
+      }
+
+      // Rende le righe focalizzabili da tastiera
+      rows().forEach(function(r) { r.setAttribute('tabindex', '-1'); });
+
+      // ↓ dalla barra di ricerca → prima riga
+      searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          var list = rows();
+          if (list.length) focusRow(list[0]);
+        }
+      });
+
+      // Navigazione dentro la griglia
+      tbody.addEventListener('keydown', function(e) {
+        var list = rows();
+        var cur = document.activeElement ? document.activeElement.closest('tr') : null;
+        if (!cur) return;
+        var idx = list.indexOf(cur);
+        if (idx === -1) return;
+
+        var activeEl = document.activeElement;
+        var inInput = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'BUTTON');
+
+        if (inInput) {
+          var isNote = activeEl.name === 'note';
+          var isQty  = activeEl.name === 'qty';
+
+          if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            var dir = e.key === 'ArrowDown' ? 1 : -1;
+            var nextIdx = idx + dir;
+            if (nextIdx >= 0 && nextIdx < list.length) {
+              var nextRow = list[nextIdx];
+              rows().forEach(function(r) { r.classList.remove('row-focused'); });
+              nextRow.classList.add('row-focused');
+              nextRow.scrollIntoView({ block: 'nearest' });
+              var fieldName = isNote ? 'note' : isQty ? 'qty' : null;
+              if (fieldName) {
+                var nextField = nextRow.querySelector('input[name="' + fieldName + '"]');
+                if (nextField) { nextField.focus(); if (isQty) nextField.select(); }
+              }
+            } else if (nextIdx < 0) {
+              clearFocus(); searchInput.focus();
+            }
+          } else if (e.key === 'Escape') {
+            e.preventDefault();
+            focusRow(cur);
+          } else if (e.key === 'ArrowLeft') {
+            if (isQty) {
+              // ← da quantità → nota (cursore in fondo)
+              e.preventDefault();
+              var n = cur.querySelector('input[name="note"]');
+              if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); }
+            } else if (isNote && activeEl.selectionStart === 0) {
+              // ← da nota a inizio → riga
+              e.preventDefault();
+              focusRow(cur);
+            }
+          } else if (e.key === 'ArrowRight' && isNote && activeEl.selectionStart === activeEl.value.length) {
+            // → da nota a fine → quantità
+            e.preventDefault();
+            var q = cur.querySelector('input[name="qty"]');
+            if (q) { q.focus(); q.select(); }
+          }
+          return; // non intercettare altri tasti mentre si scrive
+        }
+
+        // Navigazione a livello di riga
+        switch (e.key) {
+          case 'ArrowDown':
+            e.preventDefault();
+            if (idx < list.length - 1) focusRow(list[idx + 1]);
+            break;
+          case 'ArrowUp':
+            e.preventDefault();
+            if (idx > 0) { focusRow(list[idx - 1]); }
+            else { clearFocus(); searchInput.focus(); }
+            break;
+          case 'ArrowRight':
+            e.preventDefault();
+            var noteInput = cur.querySelector('input[name="note"]');
+            if (noteInput) { noteInput.focus(); noteInput.select(); }
+            break;
+          case 'PageDown':
+            e.preventDefault();
+            focusRow(list[Math.min(idx + PAGE_STEP, list.length - 1)]);
+            break;
+          case 'PageUp':
+            e.preventDefault();
+            if (idx - PAGE_STEP <= 0) { clearFocus(); searchInput.focus(); }
+            else focusRow(list[idx - PAGE_STEP]);
+            break;
+          case 'Enter':
+            e.preventDefault();
+            var btn = cur.querySelector('button.btn-success');
+            if (btn) btn.click();
+            break;
+          case 'Escape':
+            e.preventDefault();
+            clearFocus();
+            searchInput.focus();
+            break;
+        }
+      });
+
+      // Rimuove evidenziazione se il focus esce dalla griglia
+      tbody.addEventListener('focusout', function(e) {
+        if (!tbody.contains(e.relatedTarget)) clearFocus();
+      });
+    })();
   })();
 </script>
 </body>

@@ -2,6 +2,36 @@
 
 ---
 
+## 20/05/2026 — UX ricerca, carrello e navigazione da tastiera
+
+### Export CSV
+- Aggiunto campo "Ordine per:" (Cliente) nell'intestazione carrello — max 40 caratteri, tutto maiuscolo
+- Nome file export: `username_aaaammgg-cliente.csv` (rimosso progressivo giornaliero)
+- Colonne CSV estese: `codart;quantita;descrizione;note` (descrizione e nota di riga sempre incluse)
+
+### Carrello
+- Campo "Ordine per:" persistente via `sessionStorage`: sopravvive a "Salva modifiche" e navigazione avanti/indietro
+- Il nome cliente si azzera automaticamente solo dopo "Invia Ordine" → "Continua"
+- Ordine di inserimento articoli garantito tramite campo `seq` intero su ogni item; carrello e CSV rispettano l'ordine FIFO di aggiunta
+- Nota di riga e campo cliente sempre in maiuscolo automatico (CSS + JS, cursore stabile)
+
+### Ricerca
+- "Ordina" via AJAX: nessun reload di pagina, posizione scroll preservata, badge aggiornato in tempo reale, feedback visivo ✓ sul bottone
+- Posizione scroll ripristinata automaticamente tornando dal carrello alla stessa ricerca (sessionStorage)
+- Nome cliente attivo visibile nella navbar di ricerca ("Ordine per: NOME") in grassetto blu `#072b5f`
+- Highlight riga al passaggio del mouse (sfondo blu 9% su `td`, Bootstrap 5 compatible)
+
+### Navigazione da tastiera nella griglia risultati
+- `↓` dalla barra di ricerca → entra nella prima riga
+- `↓` / `↑` tra righe; `PageDown` / `PageUp` salto di 5 righe
+- `→` dalla riga → campo Nota; `→` da fine Nota → campo Quantità
+- `←` da Quantità → Nota; `←` da inizio Nota → riga
+- `↓` / `↑` da dentro un campo → scende/sale di riga restando sullo stesso campo
+- `Enter` su riga → aggiunge all'ordine (equivale a "Ordina")
+- `Esc` → torna alla barra di ricerca
+
+---
+
 ## 19/05/2026 — Vista articoli: tracciato completo
 
 - Aggiunta query SQL `documenti/vista articoli.sql` per generare il CSV mock da SSMS
