@@ -345,12 +345,18 @@
       // Rende le righe focalizzabili da tastiera
       rows().forEach(function(r) { r.setAttribute('tabindex', '-1'); });
 
-      // ↓ dalla barra di ricerca → prima riga
+      // ↓ dalla barra di ricerca → campo quantità della prima riga (selezionato)
       searchInput.addEventListener('keydown', function(e) {
         if (e.key === 'ArrowDown') {
           e.preventDefault();
           var list = rows();
-          if (list.length) focusRow(list[0]);
+          if (!list.length) return;
+          var firstRow = list[0];
+          rows().forEach(function(r) { r.classList.remove('row-focused'); });
+          firstRow.classList.add('row-focused');
+          firstRow.scrollIntoView({ block: 'nearest' });
+          var qtyInput = firstRow.querySelector('input[name="qty"]');
+          if (qtyInput) { qtyInput.focus(); qtyInput.select(); }
         }
       });
 
@@ -369,6 +375,13 @@
           var isNote = activeEl.name === 'note';
           var isQty  = activeEl.name === 'qty';
 
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            clearFocus();
+            searchInput.value = '';
+            searchInput.focus();
+            return;
+          }
           if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
             e.preventDefault();
             var dir = e.key === 'ArrowDown' ? 1 : -1;
@@ -386,9 +399,6 @@
             } else if (nextIdx < 0) {
               clearFocus(); searchInput.focus();
             }
-          } else if (e.key === 'Escape') {
-            e.preventDefault();
-            focusRow(cur);
           } else if (e.key === 'ArrowLeft') {
             if (isQty) {
               // ← da quantità → nota (cursore in fondo)
@@ -442,6 +452,7 @@
           case 'Escape':
             e.preventDefault();
             clearFocus();
+            searchInput.value = '';
             searchInput.focus();
             break;
         }

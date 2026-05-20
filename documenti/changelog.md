@@ -22,13 +22,13 @@
 - Highlight riga al passaggio del mouse (sfondo blu 9% su `td`, Bootstrap 5 compatible)
 
 ### Navigazione da tastiera nella griglia risultati
-- `↓` dalla barra di ricerca → entra nella prima riga
+- `↓` dalla barra di ricerca → campo Quantità della prima riga (selezionato, pronto a digitare)
 - `↓` / `↑` tra righe; `PageDown` / `PageUp` salto di 5 righe
 - `→` dalla riga → campo Nota; `→` da fine Nota → campo Quantità
 - `←` da Quantità → Nota; `←` da inizio Nota → riga
 - `↓` / `↑` da dentro un campo → scende/sale di riga restando sullo stesso campo
 - `Enter` su riga → aggiunge all'ordine (equivale a "Ordina")
-- `Esc` → torna alla barra di ricerca
+- `Esc` da qualsiasi punto della griglia → torna alla barra di ricerca (campo svuotato, pronto a digitare)
 
 ---
 
